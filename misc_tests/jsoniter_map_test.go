@@ -5,7 +5,7 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/json-iterator/go"
+	"github.com/jslyzt/jsoniter"
 	"github.com/stretchr/testify/require"
 	"strings"
 )

@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	jsoniter "github.com/json-iterator/go"
+	"github.com/jslyzt/jsoniter"
 	"github.com/stretchr/testify/require"
 )
 

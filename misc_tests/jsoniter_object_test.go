@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/json-iterator/go"
+	"github.com/jslyzt/jsoniter"
 	"github.com/stretchr/testify/require"
 	"strings"
 	"time"
