@@ -145,11 +145,11 @@ func createDecoderOfType(ctx *ctx, typ reflect2.Type) ValDecoder {
 }
 
 func _createDecoderOfType(ctx *ctx, typ reflect2.Type) ValDecoder {
-	decoder := createDecoderOfJsonRawMessage(ctx, typ)
+	decoder := createDecoderOfJSONRawMessage(ctx, typ)
 	if decoder != nil {
 		return decoder
 	}
-	decoder = createDecoderOfJsonNumber(ctx, typ)
+	decoder = createDecoderOfJSONNumber(ctx, typ)
 	if decoder != nil {
 		return decoder
 	}
@@ -247,11 +247,11 @@ func createEncoderOfType(ctx *ctx, typ reflect2.Type) ValEncoder {
 	return encoder
 }
 func _createEncoderOfType(ctx *ctx, typ reflect2.Type) ValEncoder {
-	encoder := createEncoderOfJsonRawMessage(ctx, typ)
+	encoder := createEncoderOfJSONRawMessage(ctx, typ)
 	if encoder != nil {
 		return encoder
 	}
-	encoder = createEncoderOfJsonNumber(ctx, typ)
+	encoder = createEncoderOfJSONNumber(ctx, typ)
 	if encoder != nil {
 		return encoder
 	}

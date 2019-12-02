@@ -221,7 +221,7 @@ func (iter *Iterator) ReportError(operation string, msg string) {
 		contextEnd = iter.tail
 	}
 	context := string(iter.buf[contextStart:contextEnd])
-	iter.Error = fmt.Errorf("%s: %s, error found in #%v byte of ...|%s|..., bigger context ...|%s|...",
+	iter.Error = fmt.Errorf("%s: %s, error found in #%v byte of ...|%s|..., bigger context ...|%s|...|",
 		operation, msg, iter.head-peekStart, parsing, context)
 }
 
@@ -294,7 +294,7 @@ func (iter *Iterator) Read() interface{} {
 	case StringValue:
 		return iter.ReadString()
 	case NumberValue:
-		if iter.cfg.configBeforeFrozen.UseNumber {
+		if iter.cfg.config.UseNumber {
 			return json.Number(iter.readNumberAsString())
 		}
 		return iter.ReadFloat64()
@@ -342,5 +342,12 @@ func (iter *Iterator) decrementDepth() (success bool) {
 		return true
 	}
 	iter.ReportError("decrementDepth", "unexpected negative nesting")
+	return false
+}
+
+func (iter *Iterator) hasMark(mark uint8) bool {
+	if iter.cfg != nil {
+		return iter.cfg.config.HasMark(mark)
+	}
 	return false
 }

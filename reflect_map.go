@@ -2,11 +2,12 @@ package jsoniter
 
 import (
 	"fmt"
-	"github.com/modern-go/reflect2"
 	"io"
 	"reflect"
 	"sort"
 	"unsafe"
+
+	"github.com/modern-go/reflect2"
 )
 
 func decoderOfMap(ctx *ctx, typ reflect2.Type) ValDecoder {
@@ -175,20 +176,33 @@ func (decoder *mapDecoder) Decode(ptr unsafe.Pointer, iter *Iterator) {
 		iter.ReportError("ReadMapCB", "expect : after object field, but found "+string([]byte{c}))
 		return
 	}
-	elem := decoder.elemType.UnsafeNew()
-	decoder.elemDecoder.Decode(elem, iter)
-	decoder.mapType.UnsafeSetIndex(ptr, key, elem)
+
+	elem := decoder.mapType.UnsafeGetIndex(ptr, key)
+	if elem == nil {
+		elem = decoder.elemType.UnsafeNew()
+		decoder.elemDecoder.Decode(elem, iter)
+		decoder.mapType.UnsafeSetIndex(ptr, key, elem)
+	} else {
+		decoder.elemDecoder.Decode(elem, iter)
+	}
+
 	for c = iter.nextToken(); c == ','; c = iter.nextToken() {
-		key := decoder.keyType.UnsafeNew()
+		key = decoder.keyType.UnsafeNew()
 		decoder.keyDecoder.Decode(key, iter)
 		c = iter.nextToken()
 		if c != ':' {
 			iter.ReportError("ReadMapCB", "expect : after object field, but found "+string([]byte{c}))
 			return
 		}
-		elem := decoder.elemType.UnsafeNew()
-		decoder.elemDecoder.Decode(elem, iter)
-		decoder.mapType.UnsafeSetIndex(ptr, key, elem)
+
+		elem = decoder.mapType.UnsafeGetIndex(ptr, key)
+		if elem == nil {
+			elem = decoder.elemType.UnsafeNew()
+			decoder.elemDecoder.Decode(elem, iter)
+			decoder.mapType.UnsafeSetIndex(ptr, key, elem)
+		} else {
+			decoder.elemDecoder.Decode(elem, iter)
+		}
 	}
 	if c != '}' {
 		iter.ReportError("ReadMapCB", `expect }, but found `+string([]byte{c}))

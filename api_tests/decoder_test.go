@@ -3,10 +3,12 @@ package test
 import (
 	"bytes"
 	"encoding/json"
+	"io/ioutil"
+	"log"
+	"testing"
+
 	"github.com/jslyzt/jsoniter"
 	"github.com/stretchr/testify/require"
-	"io/ioutil"
-	"testing"
 )
 
 func Test_disallowUnknownFields(t *testing.T) {
@@ -61,4 +63,38 @@ func Test_decoder_more(t *testing.T) {
 	should := require.New(t)
 	decoder := jsoniter.NewDecoder(bytes.NewBufferString("abcde"))
 	should.True(decoder.More())
+}
+
+func Test_decoder_join(t *testing.T) {
+	var (
+		should                 = require.New(t)
+		buf1, buf2, buf3       = &bytes.Buffer{}, &bytes.Buffer{}, &bytes.Buffer{}
+		encod1, encod2, encod3 = json.NewEncoder(buf1), json.NewEncoder(buf2), json.NewEncoder(buf3)
+	)
+
+	encod1.SetEscapeHTML(false)
+	encod2.SetEscapeHTML(false)
+	encod3.SetEscapeHTML(false)
+
+	encod1.Encode(map[string]interface{}{
+		"key":  "encode1",
+		"key1": 1,
+		"arr":  []float64{1},
+	})
+	encod2.Encode(map[string]interface{}{
+		"key":  "encode2",
+		"key2": 2,
+		"arr":  []int{2},
+	})
+	str1, str2 := buf1.String(), buf2.String()
+
+	cfg := jsoniter.ConfigGinUse
+	value := make(map[string]interface{})
+
+	err := cfg.UnmarshalFromString(str1+str2, &value)
+	should.Nil(err)
+
+	encod3.Encode(value)
+	buff := buf3.String()
+	log.Println(buff)
 }

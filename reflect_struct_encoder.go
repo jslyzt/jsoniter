@@ -2,10 +2,11 @@ package jsoniter
 
 import (
 	"fmt"
-	"github.com/modern-go/reflect2"
 	"io"
 	"reflect"
 	"unsafe"
+
+	"github.com/modern-go/reflect2"
 )
 
 func encoderOfStruct(ctx *ctx, typ reflect2.Type) ValEncoder {
@@ -127,6 +128,7 @@ func (encoder *structFieldEncoder) IsEmbeddedPtrNil(ptr unsafe.Pointer) bool {
 	return isEmbeddedPtrNil.IsEmbeddedPtrNil(fieldPtr)
 }
 
+// IsEmbeddedPtrNil 是否为空指针
 type IsEmbeddedPtrNil interface {
 	IsEmbeddedPtrNil(ptr unsafe.Pointer) bool
 }

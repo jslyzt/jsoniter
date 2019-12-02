@@ -11,8 +11,19 @@ import (
 	"github.com/modern-go/reflect2"
 )
 
-// limit maximum depth of nesting, as allowed by https://tools.ietf.org/html/rfc7159#section-9
-const defaultMaxDepth = 10000
+// 常量定义
+const (
+	defaultMaxDepth = 10000 // limit maximum depth of nesting, as allowed by https://tools.ietf.org/html/rfc7159#section-9
+)
+
+// 配置mark定义
+const (
+	_              uint8 = iota // 默认
+	MarkAppend                  // 追加
+	MarkMoreDecode              // 继续解析
+)
+
+////////////////////////////////////////////////////////////////////////////////////
 
 // Config customize how the API should behave.
 // The API is created from Config by Froze.
@@ -25,10 +36,11 @@ type Config struct {
 	DisallowUnknownFields         bool
 	TagKey                        string
 	OnlyTaggedField               bool
-	ValidateJsonRawMessage        bool
+	ValidateJSONRawMessage        bool
 	ObjectFieldMustBeSimpleString bool
 	CaseSensitive                 bool
 	MaxDepth                      int
+	MarkVal                       uint
 }
 
 // API the public interface of this package.
@@ -50,28 +62,63 @@ type API interface {
 	EncoderOf(typ reflect2.Type) ValEncoder
 }
 
-// ConfigDefault the default API
-var ConfigDefault = Config{
-	EscapeHTML: true,
-}.Froze()
+////////////////////////////////////////////////////////////////////////////////////
 
-// ConfigCompatibleWithStandardLibrary tries to be 100% compatible with standard library behavior
-var ConfigCompatibleWithStandardLibrary = Config{
-	EscapeHTML:             true,
-	SortMapKeys:            true,
-	ValidateJsonRawMessage: true,
-	MaxDepth:               -1, // encoding/json has no max depth (stack overflow at 2581101)
-}.Froze()
+var (
+	// ConfigDefault the default API
+	ConfigDefault API
 
-// ConfigFastest marshals float with only 6 digits precision
-var ConfigFastest = Config{
-	EscapeHTML:                    false,
-	MarshalFloatWith6Digits:       true, // will lose precession
-	ObjectFieldMustBeSimpleString: true, // do not unescape object field
-}.Froze()
+	// ConfigCompatibleWithStandardLibrary tries to be 100% compatible with standard library behavior
+	ConfigCompatibleWithStandardLibrary API
+
+	// ConfigGinUse use for gin
+	ConfigGinUse API
+
+	// ConfigFastest marshals float with only 6 digits precision
+	ConfigFastest API
+)
+
+func init() {
+	{
+		ConfigDefault = Config{
+			EscapeHTML: true,
+		}.Froze()
+	}
+
+	{
+		ConfigCompatibleWithStandardLibrary = Config{
+			EscapeHTML:             true,
+			SortMapKeys:            true,
+			ValidateJSONRawMessage: true,
+			MaxDepth:               -1,
+		}.Froze()
+	}
+
+	{
+		cfg := &Config{
+			EscapeHTML:             true,
+			ValidateJSONRawMessage: true,
+			MaxDepth:               -1,
+		}
+		ConfigGinUse = cfg.
+			SetMark(MarkAppend).
+			SetMark(MarkMoreDecode).
+			Froze()
+	}
+
+	{
+		ConfigFastest = Config{
+			EscapeHTML:                    false,
+			MarshalFloatWith6Digits:       true, // will lose precession
+			ObjectFieldMustBeSimpleString: true, // do not unescape object field
+		}.Froze()
+	}
+}
+
+////////////////////////////////////////////////////////////////////////////////////
 
 type frozenConfig struct {
-	configBeforeFrozen            Config
+	config                        Config
 	sortMapKeys                   bool
 	indentionStep                 int
 	objectFieldMustBeSimpleString bool
@@ -117,7 +164,11 @@ func (cfg *frozenConfig) getEncoderFromCache(cacheKey uintptr) ValEncoder {
 	return nil
 }
 
-var cfgCache = concurrent.NewMap()
+////////////////////////////////////////////////////////////////////////////////////
+
+var (
+	cfgCache = concurrent.NewMap()
+)
 
 func getFrozenConfigFromCache(cfg Config) *frozenConfig {
 	obj, found := cfgCache.Load(cfg)
@@ -167,12 +218,12 @@ func (cfg Config) Froze() API {
 	if cfg.UseNumber {
 		api.useNumber(decoderExtension)
 	}
-	if cfg.ValidateJsonRawMessage {
-		api.validateJsonRawMessage(encoderExtension)
+	if cfg.ValidateJSONRawMessage {
+		api.validateJSONRawMessage(encoderExtension)
 	}
 	api.encoderExtension = encoderExtension
 	api.decoderExtension = decoderExtension
-	api.configBeforeFrozen = cfg
+	api.config = cfg
 	return api
 }
 
@@ -189,7 +240,57 @@ func (cfg Config) frozeWithCacheReuse(extraExtensions []Extension) *frozenConfig
 	return api
 }
 
-func (cfg *frozenConfig) validateJsonRawMessage(extension EncoderExtension) {
+// SetMark 设置mark
+func (cfg *Config) setMark(mark uint8, on bool) *Config {
+	if mark > 0 && mark <= uint8(unsafe.Sizeof(cfg.MarkVal))*8 {
+		var tmp uint = 1
+		if mark > 1 {
+			tmp = tmp << (mark - 1)
+		}
+		has := cfg.MarkVal & tmp
+		if on == true && has <= 0 {
+			cfg.MarkVal |= tmp
+		} else if on == false && has > 0 {
+			cfg.MarkVal ^= tmp
+		}
+	}
+	return cfg
+}
+
+// SetMark 设置mark
+func (cfg *Config) SetMark(mark uint8) *Config {
+	if mark > 0 && mark <= uint8(unsafe.Sizeof(cfg.MarkVal))*8 {
+		return cfg.setMark(mark, true)
+	}
+	return cfg
+}
+
+// ClearMark 清除mark
+func (cfg *Config) ClearMark(mark uint8) *Config {
+	if mark > 0 && mark <= uint8(unsafe.Sizeof(cfg.MarkVal))*8 {
+		return cfg.setMark(mark, false)
+	}
+	return cfg
+}
+
+// HasMark 是否有mark
+func HasMark(val uint, mark uint8) bool {
+	if val <= 0 || mark <= 0 || mark > uint8(unsafe.Sizeof(val))*8 {
+		return false
+	}
+	var tmp uint = 1
+	if mark > 1 {
+		tmp = tmp << (mark - 1)
+	}
+	return (val & tmp) != 0
+}
+
+// HasMark 是否有mark
+func (cfg *Config) HasMark(mark uint8) bool {
+	return HasMark(cfg.MarkVal, mark)
+}
+
+func (cfg *frozenConfig) validateJSONRawMessage(extension EncoderExtension) {
 	encoder := &funcEncoder{func(ptr unsafe.Pointer, stream *Stream) {
 		rawMessage := *(*json.RawMessage)(ptr)
 		iter := cfg.BorrowIterator([]byte(rawMessage))
@@ -222,7 +323,7 @@ func (cfg *frozenConfig) useNumber(extension DecoderExtension) {
 	}}
 }
 func (cfg *frozenConfig) getTagKey() string {
-	tagKey := cfg.configBeforeFrozen.TagKey
+	tagKey := cfg.config.TagKey
 	if tagKey == "" {
 		return "json"
 	}
@@ -231,8 +332,8 @@ func (cfg *frozenConfig) getTagKey() string {
 
 func (cfg *frozenConfig) RegisterExtension(extension Extension) {
 	cfg.extraExtensions = append(cfg.extraExtensions, extension)
-	copied := cfg.configBeforeFrozen
-	cfg.configBeforeFrozen = copied
+	copied := cfg.config
+	cfg.config = copied
 }
 
 type lossyFloat32Encoder struct {
@@ -284,13 +385,13 @@ func (cfg *frozenConfig) escapeHTML(encoderExtension EncoderExtension) {
 func (cfg *frozenConfig) cleanDecoders() {
 	typeDecoders = map[string]ValDecoder{}
 	fieldDecoders = map[string]ValDecoder{}
-	*cfg = *(cfg.configBeforeFrozen.Froze().(*frozenConfig))
+	*cfg = *(cfg.config.Froze().(*frozenConfig))
 }
 
 func (cfg *frozenConfig) cleanEncoders() {
 	typeEncoders = map[string]ValEncoder{}
 	fieldEncoders = map[string]ValEncoder{}
-	*cfg = *(cfg.configBeforeFrozen.Froze().(*frozenConfig))
+	*cfg = *(cfg.config.Froze().(*frozenConfig))
 }
 
 func (cfg *frozenConfig) MarshalToString(v interface{}) (string, error) {
@@ -325,25 +426,13 @@ func (cfg *frozenConfig) MarshalIndent(v interface{}, prefix, indent string) ([]
 			panic("indent can only be space")
 		}
 	}
-	newCfg := cfg.configBeforeFrozen
+	newCfg := cfg.config
 	newCfg.IndentionStep = len(indent)
 	return newCfg.frozeWithCacheReuse(cfg.extraExtensions).Marshal(v)
 }
 
 func (cfg *frozenConfig) UnmarshalFromString(str string, v interface{}) error {
-	data := []byte(str)
-	iter := cfg.BorrowIterator(data)
-	defer cfg.ReturnIterator(iter)
-	iter.ReadVal(v)
-	c := iter.nextToken()
-	if c == 0 {
-		if iter.Error == io.EOF {
-			return nil
-		}
-		return iter.Error
-	}
-	iter.ReportError("Unmarshal", "there are bytes left after unmarshal")
-	return iter.Error
+	return cfg.Unmarshal([]byte(str), v)
 }
 
 func (cfg *frozenConfig) Get(data []byte, path ...interface{}) Any {
@@ -355,13 +444,20 @@ func (cfg *frozenConfig) Get(data []byte, path ...interface{}) Any {
 func (cfg *frozenConfig) Unmarshal(data []byte, v interface{}) error {
 	iter := cfg.BorrowIterator(data)
 	defer cfg.ReturnIterator(iter)
+
 	iter.ReadVal(v)
 	c := iter.nextToken()
-	if c == 0 {
-		if iter.Error == io.EOF {
-			return nil
+	if cfg.config.HasMark(MarkMoreDecode) == true {
+		for c != 0 && iter.Error == nil {
+			if c == '[' || c == '{' {
+				iter.unreadByte()
+				iter.ReadVal(v)
+				c = iter.nextToken()
+			}
 		}
-		return iter.Error
+	}
+	if iter.Error == io.EOF {
+		return nil
 	}
 	iter.ReportError("Unmarshal", "there are bytes left after unmarshal")
 	return iter.Error

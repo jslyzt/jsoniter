@@ -98,7 +98,7 @@ func (adapter *Decoder) Buffered() io.Reader {
 // UseNumber causes the Decoder to unmarshal a number into an interface{} as a
 // Number instead of as a float64.
 func (adapter *Decoder) UseNumber() {
-	cfg := adapter.iter.cfg.configBeforeFrozen
+	cfg := adapter.iter.cfg.config
 	cfg.UseNumber = true
 	adapter.iter.cfg = cfg.frozeWithCacheReuse(adapter.iter.cfg.extraExtensions)
 }
@@ -107,7 +107,7 @@ func (adapter *Decoder) UseNumber() {
 // is a struct and the input contains object keys which do not match any
 // non-ignored, exported fields in the destination.
 func (adapter *Decoder) DisallowUnknownFields() {
-	cfg := adapter.iter.cfg.configBeforeFrozen
+	cfg := adapter.iter.cfg.config
 	cfg.DisallowUnknownFields = true
 	adapter.iter.cfg = cfg.frozeWithCacheReuse(adapter.iter.cfg.extraExtensions)
 }
@@ -132,14 +132,14 @@ func (adapter *Encoder) Encode(val interface{}) error {
 
 // SetIndent set the indention. Prefix is not supported
 func (adapter *Encoder) SetIndent(prefix, indent string) {
-	config := adapter.stream.cfg.configBeforeFrozen
+	config := adapter.stream.cfg.config
 	config.IndentionStep = len(indent)
 	adapter.stream.cfg = config.frozeWithCacheReuse(adapter.stream.cfg.extraExtensions)
 }
 
 // SetEscapeHTML escape html by default, set to false to disable
 func (adapter *Encoder) SetEscapeHTML(escapeHTML bool) {
-	config := adapter.stream.cfg.configBeforeFrozen
+	config := adapter.stream.cfg.config
 	config.EscapeHTML = escapeHTML
 	adapter.stream.cfg = config.frozeWithCacheReuse(adapter.stream.cfg.extraExtensions)
 }

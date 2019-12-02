@@ -4,7 +4,7 @@ import (
 	"io"
 )
 
-// stream is a io.Writer like object, with JSON specific write functions.
+// Stream is a io.Writer like object, with JSON specific write functions.
 // Error is not returned as return value, but stored as Error member on this stream instance.
 type Stream struct {
 	cfg        *frozenConfig

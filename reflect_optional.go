@@ -1,9 +1,10 @@
 package jsoniter
 
 import (
-	"github.com/modern-go/reflect2"
 	"reflect"
 	"unsafe"
+
+	"github.com/modern-go/reflect2"
 )
 
 func decoderOfOptional(ctx *ctx, typ reflect2.Type) ValDecoder {
@@ -24,11 +25,13 @@ func encoderOfOptional(ctx *ctx, typ reflect2.Type) ValEncoder {
 	return encoder
 }
 
+// OptionalDecoder 解码选项
 type OptionalDecoder struct {
 	ValueType    reflect2.Type
 	ValueDecoder ValDecoder
 }
 
+// Decode 解码
 func (decoder *OptionalDecoder) Decode(ptr unsafe.Pointer, iter *Iterator) {
 	if iter.ReadNil() {
 		*((*unsafe.Pointer)(ptr)) = nil
@@ -63,10 +66,12 @@ func (decoder *dereferenceDecoder) Decode(ptr unsafe.Pointer, iter *Iterator) {
 	}
 }
 
+// OptionalEncoder 编码选项
 type OptionalEncoder struct {
 	ValueEncoder ValEncoder
 }
 
+// Encode 编码
 func (encoder *OptionalEncoder) Encode(ptr unsafe.Pointer, stream *Stream) {
 	if *((*unsafe.Pointer)(ptr)) == nil {
 		stream.WriteNil()
@@ -75,6 +80,7 @@ func (encoder *OptionalEncoder) Encode(ptr unsafe.Pointer, stream *Stream) {
 	}
 }
 
+// IsEmpty 是否为空
 func (encoder *OptionalEncoder) IsEmpty(ptr unsafe.Pointer) bool {
 	return *((*unsafe.Pointer)(ptr)) == nil
 }

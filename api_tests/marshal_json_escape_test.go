@@ -12,7 +12,7 @@ import (
 var marshalConfig = jsoniter.Config{
 	EscapeHTML:             false,
 	SortMapKeys:            true,
-	ValidateJsonRawMessage: true,
+	ValidateJSONRawMessage: true,
 }.Froze()
 
 type Container struct {

@@ -2,11 +2,13 @@ package jsoniter
 
 import (
 	"encoding/json"
-	"github.com/modern-go/reflect2"
 	"strconv"
 	"unsafe"
+
+	"github.com/modern-go/reflect2"
 )
 
+// Number 数字
 type Number string
 
 // String returns the literal text of the number.
@@ -22,7 +24,8 @@ func (n Number) Int64() (int64, error) {
 	return strconv.ParseInt(string(n), 10, 64)
 }
 
-func CastJsonNumber(val interface{}) (string, bool) {
+// CastJSONNumber 转换
+func CastJSONNumber(val interface{}) (string, bool) {
 	switch typedVal := val.(type) {
 	case json.Number:
 		return string(typedVal), true
@@ -35,7 +38,7 @@ func CastJsonNumber(val interface{}) (string, bool) {
 var jsonNumberType = reflect2.TypeOfPtr((*json.Number)(nil)).Elem()
 var jsoniterNumberType = reflect2.TypeOfPtr((*Number)(nil)).Elem()
 
-func createDecoderOfJsonNumber(ctx *ctx, typ reflect2.Type) ValDecoder {
+func createDecoderOfJSONNumber(ctx *ctx, typ reflect2.Type) ValDecoder {
 	if typ.AssignableTo(jsonNumberType) {
 		return &jsonNumberCodec{}
 	}
@@ -45,7 +48,7 @@ func createDecoderOfJsonNumber(ctx *ctx, typ reflect2.Type) ValDecoder {
 	return nil
 }
 
-func createEncoderOfJsonNumber(ctx *ctx, typ reflect2.Type) ValEncoder {
+func createEncoderOfJSONNumber(ctx *ctx, typ reflect2.Type) ValEncoder {
 	if typ.AssignableTo(jsonNumberType) {
 		return &jsonNumberCodec{}
 	}

@@ -1,9 +1,10 @@
 package jsoniter
 
 import (
-	"github.com/modern-go/reflect2"
 	"reflect"
 	"unsafe"
+
+	"github.com/modern-go/reflect2"
 )
 
 type dynamicEncoder struct {
@@ -30,10 +31,34 @@ func (decoder *efaceDecoder) Decode(ptr unsafe.Pointer, iter *Iterator) {
 		return
 	}
 	typ := reflect2.TypeOf(obj)
-	if typ.Kind() != reflect.Ptr {
-		*pObj = iter.Read()
-		return
+	switch typ.Kind() {
+	case reflect.Array, reflect.Slice:
+		{
+			val := iter.Read()
+			if val != nil && iter.hasMark(MarkAppend) == true {
+				arr, ok := val.([]interface{})
+				if ok == true && arr != nil {
+					*pObj = append(obj.([]interface{}), arr...)
+				} else {
+					*pObj = append(obj.([]interface{}), val)
+				}
+			}
+			return
+		}
+	case reflect.Map:
+		{
+			iter.ReadVal(obj)
+			return
+		}
+	default:
+		{
+			if typ.Kind() != reflect.Ptr {
+				*pObj = iter.Read()
+				return
+			}
+		}
 	}
+
 	ptrType := typ.(*reflect2.UnsafePtrType)
 	ptrElemType := ptrType.Elem()
 	if iter.WhatIsNext() == NilValue {
