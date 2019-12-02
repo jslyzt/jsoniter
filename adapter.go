@@ -62,17 +62,32 @@ type Decoder struct {
 
 // Decode decode JSON into interface{}
 func (adapter *Decoder) Decode(obj interface{}) error {
-	if adapter.iter.head == adapter.iter.tail && adapter.iter.reader != nil {
-		if !adapter.iter.loadMore() {
+	iter := adapter.iter
+	if iter == nil {
+		return nil
+	}
+	if iter.head == iter.tail && iter.reader != nil {
+		if !iter.loadMore() {
 			return io.EOF
 		}
 	}
-	adapter.iter.ReadVal(obj)
-	err := adapter.iter.Error
-	if err == io.EOF {
+
+	iter.ReadVal(obj)
+	c := iter.nextToken()
+	if iter != nil && iter.cfg.config.HasMark(MarkMoreDecode) == true {
+		for c != 0 && iter.Error == nil {
+			if c == '[' || c == '{' {
+				iter.unreadByte()
+				iter.ReadVal(obj)
+				c = iter.nextToken()
+			}
+		}
+	}
+	if iter.Error == io.EOF {
 		return nil
 	}
-	return adapter.iter.Error
+	iter.ReportError("Decode", "there are bytes left after decode")
+	return iter.Error
 }
 
 // More is there more?
