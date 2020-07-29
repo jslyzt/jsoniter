@@ -25,13 +25,13 @@ func encoderOfOptional(ctx *ctx, typ reflect2.Type) ValEncoder {
 	return encoder
 }
 
-// OptionalDecoder 瑙ｇ爜閫夐」
+// OptionalDecoder 解码选项
 type OptionalDecoder struct {
 	ValueType    reflect2.Type
 	ValueDecoder ValDecoder
 }
 
-// Decode 瑙ｇ爜
+// Decode 解码
 func (decoder *OptionalDecoder) Decode(ptr unsafe.Pointer, iter *Iterator) {
 	if iter.ReadNil() {
 		*((*unsafe.Pointer)(ptr)) = nil
@@ -66,12 +66,12 @@ func (decoder *dereferenceDecoder) Decode(ptr unsafe.Pointer, iter *Iterator) {
 	}
 }
 
-// OptionalEncoder 缂栫爜閫夐」
+// OptionalEncoder 编码选项
 type OptionalEncoder struct {
 	ValueEncoder ValEncoder
 }
 
-// Encode 缂栫爜
+// Encode 编码
 func (encoder *OptionalEncoder) Encode(ptr unsafe.Pointer, stream *Stream) {
 	if *((*unsafe.Pointer)(ptr)) == nil {
 		stream.WriteNil()
@@ -80,7 +80,7 @@ func (encoder *OptionalEncoder) Encode(ptr unsafe.Pointer, stream *Stream) {
 	}
 }
 
-// IsEmpty 鏄惁涓虹┖
+// IsEmpty 是否为空
 func (encoder *OptionalEncoder) IsEmpty(ptr unsafe.Pointer) bool {
 	return *((*unsafe.Pointer)(ptr)) == nil
 }
