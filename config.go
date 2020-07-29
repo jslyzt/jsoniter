@@ -11,16 +11,16 @@ import (
 	"github.com/modern-go/reflect2"
 )
 
-// ³£Á¿¶¨Òå
+// å¸¸é‡å®šä¹‰
 const (
 	defaultMaxDepth = 10000 // limit maximum depth of nesting, as allowed by https://tools.ietf.org/html/rfc7159#section-9
 )
 
-// ÅäÖÃmark¶¨Òå
+// é…ç½®markå®šä¹‰
 const (
-	_              uint8 = iota // Ä¬ÈÏ
-	MarkAppend                  // ×·¼Ó
-	MarkMoreDecode              // ¼ÌĞø½âÎö
+	_              uint8 = iota // é»˜è??
+	MarkAppend                  // è¿½åŠ 
+	MarkMoreDecode              // ç»§ç»­è§£æ
 )
 
 ////////////////////////////////////////////////////////////////////////////////////
@@ -240,7 +240,7 @@ func (cfg Config) frozeWithCacheReuse(extraExtensions []Extension) *frozenConfig
 	return api
 }
 
-// SetMark ÉèÖÃmark
+// SetMark è®¾ç½®mark
 func (cfg *Config) setMark(mark uint8, on bool) *Config {
 	if mark > 0 && mark <= uint8(unsafe.Sizeof(cfg.MarkVal))*8 {
 		var tmp uint = 1
@@ -257,7 +257,7 @@ func (cfg *Config) setMark(mark uint8, on bool) *Config {
 	return cfg
 }
 
-// SetMark ÉèÖÃmark
+// SetMark è®¾ç½®mark
 func (cfg *Config) SetMark(mark uint8) *Config {
 	if mark > 0 && mark <= uint8(unsafe.Sizeof(cfg.MarkVal))*8 {
 		return cfg.setMark(mark, true)
@@ -265,7 +265,7 @@ func (cfg *Config) SetMark(mark uint8) *Config {
 	return cfg
 }
 
-// ClearMark Çå³ımark
+// ClearMark æ¸…é™¤mark
 func (cfg *Config) ClearMark(mark uint8) *Config {
 	if mark > 0 && mark <= uint8(unsafe.Sizeof(cfg.MarkVal))*8 {
 		return cfg.setMark(mark, false)
@@ -273,7 +273,7 @@ func (cfg *Config) ClearMark(mark uint8) *Config {
 	return cfg
 }
 
-// HasMark ÊÇ·ñÓĞmark
+// HasMark æ˜?å¦æœ‰mark
 func HasMark(val uint, mark uint8) bool {
 	if val <= 0 || mark <= 0 || mark > uint8(unsafe.Sizeof(val))*8 {
 		return false
@@ -285,7 +285,7 @@ func HasMark(val uint, mark uint8) bool {
 	return (val & tmp) != 0
 }
 
-// HasMark ÊÇ·ñÓĞmark
+// HasMark æ˜?å¦æœ‰mark
 func (cfg *Config) HasMark(mark uint8) bool {
 	return HasMark(cfg.MarkVal, mark)
 }
