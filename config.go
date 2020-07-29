@@ -18,7 +18,7 @@ const (
 
 // 配置mark定义
 const (
-	_              uint8 = iota // 默�??
+	_              uint8 = iota // 默认
 	MarkAppend                  // 追加
 	MarkMoreDecode              // 继续解析
 )
@@ -273,7 +273,7 @@ func (cfg *Config) ClearMark(mark uint8) *Config {
 	return cfg
 }
 
-// HasMark �?否有mark
+// HasMark �?否有mark
 func HasMark(val uint, mark uint8) bool {
 	if val <= 0 || mark <= 0 || mark > uint8(unsafe.Sizeof(val))*8 {
 		return false
@@ -285,7 +285,7 @@ func HasMark(val uint, mark uint8) bool {
 	return (val & tmp) != 0
 }
 
-// HasMark �?否有mark
+// HasMark �?否有mark
 func (cfg *Config) HasMark(mark uint8) bool {
 	return HasMark(cfg.MarkVal, mark)
 }
