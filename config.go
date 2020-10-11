@@ -18,9 +18,9 @@ const (
 
 // 配置mark定义
 const (
-	_              uint8 = iota // 默认
-	MarkAppend                  // 追加
-	MarkMoreDecode              // 继续解析
+	_              uint8 = iota
+	MarkAppend           // 追加
+	MarkMoreDecode       // 继续解析
 )
 
 ////////////////////////////////////////////////////////////////////////////////////
